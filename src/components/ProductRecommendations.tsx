@@ -15,6 +15,7 @@ const mockProducts = [
     name: "Vitamin C Face Serum",
     brand: "Minimalist",
     category: "Skincare",
+    type: "serum",
     price: 599,
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=400&fit=crop",
@@ -25,6 +26,7 @@ const mockProducts = [
     name: "HD Perfecting Foundation",
     brand: "Sugar Cosmetics",
     category: "Makeup",
+    type: "foundation",
     price: 899,
     rating: 4.6,
     image: "https://images.unsplash.com/photo-1631214524020-7e18db9a8f92?w=400&h=400&fit=crop",
@@ -32,9 +34,10 @@ const mockProducts = [
   },
   {
     id: 3,
-    name: "Ubtan Glow Face Cream",
+    name: "Ubtan Glow Moisturizer Cream",
     brand: "Mamaearth",
     category: "Skincare",
+    type: "moisturizer",
     price: 449,
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1556228994-4a1a8e1d6c68?w=400&h=400&fit=crop",
@@ -45,10 +48,77 @@ const mockProducts = [
     name: "Blusher Palette - Rosy Glow",
     brand: "Lakme",
     category: "Makeup",
+    type: "blush",
     price: 650,
     rating: 4.7,
     image: "https://images.unsplash.com/photo-1583241800698-2d5e5e0bc60c?w=400&h=400&fit=crop",
     match: 92,
+  },
+  {
+    id: 5,
+    name: "Matte Lipstick - Ruby Red",
+    brand: "Sugar Cosmetics",
+    category: "Makeup",
+    type: "lipstick",
+    price: 499,
+    rating: 4.8,
+    image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&h=400&fit=crop",
+    match: 96,
+  },
+  {
+    id: 6,
+    name: "Liquid Matte Lipstick - Nude Rose",
+    brand: "Lakme",
+    category: "Makeup",
+    type: "lipstick",
+    price: 425,
+    rating: 4.7,
+    image: "https://images.unsplash.com/photo-1631730486208-1e6b35b0771f?w=400&h=400&fit=crop",
+    match: 94,
+  },
+  {
+    id: 7,
+    name: "Gel-Based Lipstick - Berry Blush",
+    brand: "MyGlamm",
+    category: "Makeup",
+    type: "lipstick",
+    price: 550,
+    rating: 4.6,
+    image: "https://images.unsplash.com/photo-1617897903246-719242758050?w=400&h=400&fit=crop",
+    match: 93,
+  },
+  {
+    id: 8,
+    name: "Hydrating Cleanser",
+    brand: "Minimalist",
+    category: "Skincare",
+    type: "cleanser",
+    price: 349,
+    rating: 4.8,
+    image: "https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?w=400&h=400&fit=crop",
+    match: 95,
+  },
+  {
+    id: 9,
+    name: "Sunscreen SPF 50",
+    brand: "Minimalist",
+    category: "Skincare",
+    type: "sunscreen",
+    price: 525,
+    rating: 4.9,
+    image: "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=400&h=400&fit=crop",
+    match: 97,
+  },
+  {
+    id: 10,
+    name: "Eyeshadow Palette - Sunset Dreams",
+    brand: "Sugar Cosmetics",
+    category: "Makeup",
+    type: "eyeshadow",
+    price: 799,
+    rating: 4.7,
+    image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400&h=400&fit=crop",
+    match: 91,
   },
 ];
 
@@ -66,11 +136,8 @@ const ProductRecommendations = ({
     
     if (selectedProductTypes.length === 0) return matchesCategory;
     
-    // Match product name with selected types
-    const productNameLower = product.name.toLowerCase();
-    return matchesCategory && selectedProductTypes.some(type => 
-      productNameLower.includes(type)
-    );
+    // Match product type directly
+    return matchesCategory && selectedProductTypes.includes(product.type);
   });
 
   const displayProducts = filteredProducts.length > 0 ? filteredProducts : mockProducts;

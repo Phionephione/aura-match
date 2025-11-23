@@ -5,6 +5,8 @@ import { Star, ShoppingCart } from "lucide-react";
 
 interface ProductRecommendationsProps {
   skinAnalysis: any;
+  selectedCategory?: string;
+  selectedProductTypes?: string[];
 }
 
 const mockProducts = [
@@ -50,7 +52,29 @@ const mockProducts = [
   },
 ];
 
-const ProductRecommendations = ({ skinAnalysis }: ProductRecommendationsProps) => {
+const ProductRecommendations = ({ 
+  skinAnalysis, 
+  selectedCategory = "", 
+  selectedProductTypes = [] 
+}: ProductRecommendationsProps) => {
+  // Filter products based on selected category and types
+  const filteredProducts = mockProducts.filter((product) => {
+    if (!selectedCategory) return true;
+    
+    const productCategory = product.category.toLowerCase();
+    const matchesCategory = productCategory === selectedCategory;
+    
+    if (selectedProductTypes.length === 0) return matchesCategory;
+    
+    // Match product name with selected types
+    const productNameLower = product.name.toLowerCase();
+    return matchesCategory && selectedProductTypes.some(type => 
+      productNameLower.includes(type)
+    );
+  });
+
+  const displayProducts = filteredProducts.length > 0 ? filteredProducts : mockProducts;
+
   return (
     <section className="py-20 px-4">
       <div className="container max-w-7xl mx-auto">
@@ -93,7 +117,7 @@ const ProductRecommendations = ({ skinAnalysis }: ProductRecommendationsProps) =
         )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {mockProducts.map((product) => (
+          {displayProducts.map((product) => (
             <Card key={product.id} className="overflow-hidden shadow-medium hover:shadow-glow transition-all hover:scale-105 duration-300 bg-card">
               <div className="relative">
                 <img

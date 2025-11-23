@@ -10,40 +10,40 @@ interface ProductRecommendationsProps {
 const mockProducts = [
   {
     id: 1,
-    name: "Hydrating Face Serum",
-    brand: "GlowLab",
+    name: "Vitamin C Face Serum",
+    brand: "Minimalist",
     category: "Skincare",
-    price: 45.99,
+    price: 599,
     rating: 4.8,
     image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=400&fit=crop",
     match: 98,
   },
   {
     id: 2,
-    name: "Luminous Foundation",
-    brand: "BeautyPro",
+    name: "HD Perfecting Foundation",
+    brand: "Sugar Cosmetics",
     category: "Makeup",
-    price: 38.00,
+    price: 899,
     rating: 4.6,
     image: "https://images.unsplash.com/photo-1631214524020-7e18db9a8f92?w=400&h=400&fit=crop",
     match: 95,
   },
   {
     id: 3,
-    name: "Vitamin C Brightening Cream",
-    brand: "SkinScience",
+    name: "Ubtan Glow Face Cream",
+    brand: "Mamaearth",
     category: "Skincare",
-    price: 52.00,
+    price: 449,
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1556228994-4a1a8e1d6c68?w=400&h=400&fit=crop",
     match: 94,
   },
   {
     id: 4,
-    name: "Rose Blush Palette",
-    brand: "ColorMe",
+    name: "Blusher Palette - Rosy Glow",
+    brand: "Lakme",
     category: "Makeup",
-    price: 32.00,
+    price: 650,
     rating: 4.7,
     image: "https://images.unsplash.com/photo-1583241800698-2d5e5e0bc60c?w=400&h=400&fit=crop",
     match: 92,
@@ -125,7 +125,7 @@ const ProductRecommendations = ({ skinAnalysis }: ProductRecommendationsProps) =
 
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-xl font-bold text-rose">
-                    ${product.price}
+                    ₹{product.price}
                   </span>
                   <Button size="sm" className="bg-rose hover:bg-rose/90 text-white">
                     <ShoppingCart className="w-4 h-4 mr-1" />

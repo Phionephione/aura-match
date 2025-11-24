@@ -15,49 +15,49 @@ const makeupFilters = [
   {
     id: "lipstick-red",
     name: "Bold Red Lips",
-    color: "rgba(220, 20, 60, 0.8)",
+    color: "rgba(220, 20, 60, 0.5)",
     type: "lipstick",
   },
   {
     id: "lipstick-nude",
     name: "Nude Lips",
-    color: "rgba(210, 140, 130, 0.7)",
+    color: "rgba(210, 140, 130, 0.4)",
     type: "lipstick",
   },
   {
     id: "lipstick-pink",
     name: "Pink Gloss",
-    color: "rgba(255, 105, 180, 0.7)",
+    color: "rgba(255, 105, 180, 0.45)",
     type: "lipstick",
   },
   {
     id: "foundation-light",
     name: "Light Foundation",
-    color: "rgba(255, 220, 200, 0.4)",
+    color: "rgba(255, 220, 200, 0.2)",
     type: "foundation",
   },
   {
     id: "foundation-medium",
     name: "Medium Foundation",
-    color: "rgba(205, 170, 140, 0.4)",
+    color: "rgba(205, 170, 140, 0.2)",
     type: "foundation",
   },
   {
     id: "blush-pink",
     name: "Pink Blush",
-    color: "rgba(255, 182, 193, 0.6)",
+    color: "rgba(255, 182, 193, 0.35)",
     type: "blush",
   },
   {
     id: "eyeshadow-bronze",
     name: "Bronze Eyeshadow",
-    color: "rgba(205, 127, 50, 0.5)",
+    color: "rgba(205, 127, 50, 0.3)",
     type: "eyeshadow",
   },
   {
     id: "eyeshadow-purple",
     name: "Purple Eyeshadow",
-    color: "rgba(147, 112, 219, 0.5)",
+    color: "rgba(147, 112, 219, 0.3)",
     type: "eyeshadow",
   },
 ];
@@ -117,13 +117,16 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
     indices: number[],
     color: string,
     width: number,
-    height: number
+    height: number,
+    blur: number = 8
   ) => {
     if (!landmarks) return;
 
-    ctx.fillStyle = color;
-    ctx.beginPath();
+    // Save context state
+    ctx.save();
     
+    // Create path for the region
+    ctx.beginPath();
     indices.forEach((index, i) => {
       const point = landmarks[index];
       const x = point.x * width;
@@ -135,9 +138,18 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
         ctx.lineTo(x, y);
       }
     });
-    
     ctx.closePath();
+
+    // Apply blur for soft edges
+    ctx.filter = `blur(${blur}px)`;
+    
+    // Use multiply blend mode for more realistic makeup application
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = color;
     ctx.fill();
+    
+    // Restore context
+    ctx.restore();
   };
 
   useEffect(() => {
@@ -170,20 +182,24 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
       // Apply makeup to specific regions based on type
       switch (filter.type) {
         case "lipstick":
-          applyMakeupToRegion(ctx, LIP_INDICES.outer, filter.color, canvas.width, canvas.height);
+          applyMakeupToRegion(ctx, LIP_INDICES.outer, filter.color, canvas.width, canvas.height, 4);
           break;
         case "blush":
-          applyMakeupToRegion(ctx, CHEEK_INDICES.left, filter.color, canvas.width, canvas.height);
-          applyMakeupToRegion(ctx, CHEEK_INDICES.right, filter.color, canvas.width, canvas.height);
+          applyMakeupToRegion(ctx, CHEEK_INDICES.left, filter.color, canvas.width, canvas.height, 12);
+          applyMakeupToRegion(ctx, CHEEK_INDICES.right, filter.color, canvas.width, canvas.height, 12);
           break;
         case "eyeshadow":
-          applyMakeupToRegion(ctx, EYE_INDICES.left, filter.color, canvas.width, canvas.height);
-          applyMakeupToRegion(ctx, EYE_INDICES.right, filter.color, canvas.width, canvas.height);
+          applyMakeupToRegion(ctx, EYE_INDICES.left, filter.color, canvas.width, canvas.height, 8);
+          applyMakeupToRegion(ctx, EYE_INDICES.right, filter.color, canvas.width, canvas.height, 8);
           break;
         case "foundation":
-          // For foundation, apply a lighter overlay to face area
+          // For foundation, apply a subtle overlay with soft blending
+          ctx.save();
+          ctx.globalCompositeOperation = 'overlay';
+          ctx.filter = 'blur(15px)';
           ctx.fillStyle = filter.color;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.restore();
           break;
       }
     };

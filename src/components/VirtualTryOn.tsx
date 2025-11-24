@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { useEffect, useRef, useState } from "react";
 import { detectFaceLandmarks, LIP_INDICES, CHEEK_INDICES, EYE_INDICES } from "@/lib/faceDetection";
 import { useToast } from "@/hooks/use-toast";
@@ -14,50 +15,74 @@ interface VirtualTryOnProps {
 const makeupFilters = [
   {
     id: "lipstick-red",
-    name: "Bold Red Lips",
-    color: "rgba(220, 20, 60, 0.5)",
+    name: "Bold Red",
+    baseColor: { r: 220, g: 20, b: 60 },
     type: "lipstick",
   },
   {
     id: "lipstick-nude",
-    name: "Nude Lips",
-    color: "rgba(210, 140, 130, 0.4)",
+    name: "Nude",
+    baseColor: { r: 210, g: 140, b: 130 },
     type: "lipstick",
   },
   {
     id: "lipstick-pink",
     name: "Pink Gloss",
-    color: "rgba(255, 105, 180, 0.45)",
+    baseColor: { r: 255, g: 105, b: 180 },
+    type: "lipstick",
+  },
+  {
+    id: "lipstick-coral",
+    name: "Coral",
+    baseColor: { r: 255, g: 127, b: 80 },
+    type: "lipstick",
+  },
+  {
+    id: "lipstick-berry",
+    name: "Berry",
+    baseColor: { r: 135, g: 38, b: 87 },
+    type: "lipstick",
+  },
+  {
+    id: "lipstick-mauve",
+    name: "Mauve",
+    baseColor: { r: 224, g: 176, b: 255 },
+    type: "lipstick",
+  },
+  {
+    id: "lipstick-brown",
+    name: "Brown",
+    baseColor: { r: 160, g: 82, b: 45 },
     type: "lipstick",
   },
   {
     id: "foundation-light",
     name: "Light Foundation",
-    color: "rgba(255, 220, 200, 0.2)",
+    baseColor: { r: 255, g: 220, b: 200 },
     type: "foundation",
   },
   {
     id: "foundation-medium",
     name: "Medium Foundation",
-    color: "rgba(205, 170, 140, 0.2)",
+    baseColor: { r: 205, g: 170, b: 140 },
     type: "foundation",
   },
   {
     id: "blush-pink",
     name: "Pink Blush",
-    color: "rgba(255, 182, 193, 0.35)",
+    baseColor: { r: 255, g: 182, b: 193 },
     type: "blush",
   },
   {
     id: "eyeshadow-bronze",
-    name: "Bronze Eyeshadow",
-    color: "rgba(205, 127, 50, 0.3)",
+    name: "Bronze",
+    baseColor: { r: 205, g: 127, b: 50 },
     type: "eyeshadow",
   },
   {
     id: "eyeshadow-purple",
-    name: "Purple Eyeshadow",
-    color: "rgba(147, 112, 219, 0.3)",
+    name: "Purple",
+    baseColor: { r: 147, g: 112, b: 219 },
     type: "eyeshadow",
   },
 ];
@@ -65,6 +90,7 @@ const makeupFilters = [
 const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [intensity, setIntensity] = useState<number>(50);
   const [landmarks, setLandmarks] = useState<any>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const { toast } = useToast();
@@ -115,12 +141,16 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
   const applyMakeupToRegion = (
     ctx: CanvasRenderingContext2D,
     indices: number[],
-    color: string,
+    baseColor: { r: number; g: number; b: number },
     width: number,
     height: number,
-    blur: number = 8
+    blur: number = 8,
+    intensityMultiplier: number = 1
   ) => {
     if (!landmarks) return;
+
+    // Calculate opacity based on intensity slider (0-100)
+    const opacity = (intensity / 100) * intensityMultiplier;
 
     // Save context state
     ctx.save();
@@ -145,7 +175,7 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
     
     // Use multiply blend mode for more realistic makeup application
     ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = color;
+    ctx.fillStyle = `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, ${opacity})`;
     ctx.fill();
     
     // Restore context
@@ -174,7 +204,8 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
 
       if (!landmarks) {
         // Fallback: apply to entire image
-        ctx.fillStyle = filter.color;
+        const fallbackOpacity = (intensity / 100) * 0.5;
+        ctx.fillStyle = `rgba(${filter.baseColor.r}, ${filter.baseColor.g}, ${filter.baseColor.b}, ${fallbackOpacity})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         return;
       }
@@ -182,28 +213,29 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
       // Apply makeup to specific regions based on type
       switch (filter.type) {
         case "lipstick":
-          applyMakeupToRegion(ctx, LIP_INDICES.outer, filter.color, canvas.width, canvas.height, 4);
+          applyMakeupToRegion(ctx, LIP_INDICES.outer, filter.baseColor, canvas.width, canvas.height, 4, 0.5);
           break;
         case "blush":
-          applyMakeupToRegion(ctx, CHEEK_INDICES.left, filter.color, canvas.width, canvas.height, 12);
-          applyMakeupToRegion(ctx, CHEEK_INDICES.right, filter.color, canvas.width, canvas.height, 12);
+          applyMakeupToRegion(ctx, CHEEK_INDICES.left, filter.baseColor, canvas.width, canvas.height, 12, 0.35);
+          applyMakeupToRegion(ctx, CHEEK_INDICES.right, filter.baseColor, canvas.width, canvas.height, 12, 0.35);
           break;
         case "eyeshadow":
-          applyMakeupToRegion(ctx, EYE_INDICES.left, filter.color, canvas.width, canvas.height, 8);
-          applyMakeupToRegion(ctx, EYE_INDICES.right, filter.color, canvas.width, canvas.height, 8);
+          applyMakeupToRegion(ctx, EYE_INDICES.left, filter.baseColor, canvas.width, canvas.height, 8, 0.3);
+          applyMakeupToRegion(ctx, EYE_INDICES.right, filter.baseColor, canvas.width, canvas.height, 8, 0.3);
           break;
         case "foundation":
           // For foundation, apply a subtle overlay with soft blending
+          const foundationOpacity = (intensity / 100) * 0.2;
           ctx.save();
           ctx.globalCompositeOperation = 'overlay';
           ctx.filter = 'blur(15px)';
-          ctx.fillStyle = filter.color;
+          ctx.fillStyle = `rgba(${filter.baseColor.r}, ${filter.baseColor.g}, ${filter.baseColor.b}, ${foundationOpacity})`;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.restore();
           break;
       }
     };
-  }, [selectedFilter, imageUrl, landmarks]);
+  }, [selectedFilter, imageUrl, landmarks, intensity]);
 
   return (
     <section className="py-20 px-4 bg-gradient-to-b from-background to-warm-beige/30">
@@ -250,21 +282,21 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
                 {/* Group by type */}
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Lipsticks</h4>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     {makeupFilters.filter(f => f.type === "lipstick").map((filter) => (
                       <Button
                         key={filter.id}
                         onClick={() => setSelectedFilter(filter.id)}
                         variant={selectedFilter === filter.id ? "default" : "outline"}
-                        className={`h-auto py-4 flex flex-col gap-2 ${
+                        className={`h-auto py-3 flex flex-col gap-2 ${
                           selectedFilter === filter.id
                             ? "bg-rose hover:bg-rose/90 text-white"
                             : "border-rose/30 hover:border-rose hover:bg-rose/5"
                         }`}
                       >
                         <div
-                          className="w-10 h-10 rounded-full shadow-soft border-2 border-white"
-                          style={{ backgroundColor: filter.color }}
+                          className="w-8 h-8 rounded-full shadow-soft border-2 border-white"
+                          style={{ backgroundColor: `rgb(${filter.baseColor.r}, ${filter.baseColor.g}, ${filter.baseColor.b})` }}
                         />
                         <span className="text-xs font-medium">{filter.name}</span>
                       </Button>
@@ -288,7 +320,7 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
                       >
                         <div
                           className="w-10 h-10 rounded-full shadow-soft border-2 border-white"
-                          style={{ backgroundColor: filter.color }}
+                          style={{ backgroundColor: `rgb(${filter.baseColor.r}, ${filter.baseColor.g}, ${filter.baseColor.b})` }}
                         />
                         <span className="text-xs font-medium">{filter.name}</span>
                       </Button>
@@ -312,7 +344,7 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
                       >
                         <div
                           className="w-10 h-10 rounded-full shadow-soft border-2 border-white"
-                          style={{ backgroundColor: filter.color }}
+                          style={{ backgroundColor: `rgb(${filter.baseColor.r}, ${filter.baseColor.g}, ${filter.baseColor.b})` }}
                         />
                         <span className="text-xs font-medium">{filter.name}</span>
                       </Button>
@@ -322,13 +354,31 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
               </div>
 
               {selectedFilter && (
-                <Button
-                  onClick={() => setSelectedFilter(null)}
-                  variant="ghost"
-                  className="w-full mt-4 text-muted-foreground hover:text-foreground"
-                >
-                  Clear Filter
-                </Button>
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-foreground">
+                        Intensity
+                      </label>
+                      <span className="text-sm text-muted-foreground">{intensity}%</span>
+                    </div>
+                    <Slider
+                      value={[intensity]}
+                      onValueChange={(value) => setIntensity(value[0])}
+                      min={0}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => setSelectedFilter(null)}
+                    variant="ghost"
+                    className="w-full text-muted-foreground hover:text-foreground"
+                  >
+                    Clear Filter
+                  </Button>
+                </div>
               )}
             </Card>
 

@@ -85,16 +85,25 @@ const VirtualTryOn = ({ imageUrl, skinTone }: VirtualTryOnProps) => {
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
 
+      // Give the image a moment to fully render
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Detect face landmarks
       setIsDetecting(true);
       try {
+        console.log("Starting face detection...");
         const detectedLandmarks = await detectFaceLandmarks(img);
+        console.log("Face detected successfully!");
         setLandmarks(detectedLandmarks);
+        toast({
+          title: "Face Detected!",
+          description: "Virtual try-on filters will be applied to your facial features.",
+        });
       } catch (error) {
         console.error("Face detection error:", error);
         toast({
           title: "Face Detection Failed",
-          description: "Could not detect face landmarks. Filters will apply to entire image.",
+          description: error instanceof Error ? error.message : "Please try a photo with your face clearly visible and well-lit.",
           variant: "destructive",
         });
       } finally {

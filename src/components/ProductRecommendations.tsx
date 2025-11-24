@@ -5,8 +5,7 @@ import { Star, ShoppingCart } from "lucide-react";
 
 interface ProductRecommendationsProps {
   skinAnalysis: any;
-  selectedCategory?: string;
-  selectedProductTypes?: string[];
+  searchQuery: string;
 }
 
 const mockProducts = [
@@ -122,25 +121,25 @@ const mockProducts = [
   },
 ];
 
-const ProductRecommendations = ({ 
-  skinAnalysis, 
-  selectedCategory = "", 
-  selectedProductTypes = [] 
+const ProductRecommendations = ({
+  skinAnalysis,
+  searchQuery,
 }: ProductRecommendationsProps) => {
-  // Filter products based on selected category and types
-  const filteredProducts = mockProducts.filter((product) => {
-    if (!selectedCategory) return true;
-    
-    const productCategory = product.category.toLowerCase();
-    const matchesCategory = productCategory === selectedCategory;
-    
-    if (selectedProductTypes.length === 0) return matchesCategory;
-    
-    // Match product type directly
-    return matchesCategory && selectedProductTypes.includes(product.type);
-  });
+  // In a real application, this is where you would integrate with an AI service
+  // to get personalized recommendations based on skinAnalysis and searchQuery.
+  // For now, we'll just display all mock products.
+  
+  const displayProducts = mockProducts.filter((product) => {
+    if (!searchQuery) return true; // If no search query, show all products
 
-  const displayProducts = filteredProducts.length > 0 ? filteredProducts : mockProducts;
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(lowerCaseQuery) ||
+      product.brand.toLowerCase().includes(lowerCaseQuery) ||
+      product.category.toLowerCase().includes(lowerCaseQuery) ||
+      product.type.toLowerCase().includes(lowerCaseQuery)
+    );
+  });
 
   return (
     <section className="py-20 px-4">
@@ -151,6 +150,7 @@ const ProductRecommendations = ({
           </h2>
           <p className="text-lg text-muted-foreground">
             Personalized recommendations based on your unique skin analysis
+            {searchQuery && ` and your search for "${searchQuery}"`}
           </p>
         </div>
 

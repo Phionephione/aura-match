@@ -25,10 +25,32 @@ export const initializeFaceLandmarker = async () => {
 
 export const detectFaceLandmarks = async (image: HTMLImageElement) => {
   const landmarker = await initializeFaceLandmarker();
+  
+  // Ensure image is fully loaded and has valid dimensions
+  if (!image.complete || image.naturalWidth === 0 || image.naturalHeight === 0) {
+    console.log("Image not ready:", { 
+      complete: image.complete, 
+      width: image.naturalWidth, 
+      height: image.naturalHeight 
+    });
+    throw new Error("Image not fully loaded");
+  }
+
+  console.log("Detecting face in image:", { 
+    width: image.naturalWidth, 
+    height: image.naturalHeight,
+    src: image.src.substring(0, 50) 
+  });
+
   const results = landmarker.detect(image);
   
+  console.log("Detection results:", {
+    faceLandmarksCount: results.faceLandmarks?.length || 0,
+    faceBlendshapesCount: results.faceBlendshapes?.length || 0
+  });
+  
   if (!results.faceLandmarks || results.faceLandmarks.length === 0) {
-    throw new Error("No face detected");
+    throw new Error("No face detected - try a clearer photo with better lighting and face directly visible");
   }
 
   return results.faceLandmarks[0];

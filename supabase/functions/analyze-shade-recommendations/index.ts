@@ -46,9 +46,16 @@ Return your response as a JSON array with this structure:
     "price": price in rupees (number),
     "whyItSuits": "2-3 sentence explanation of why this shade suits their skin tone/undertone/concerns",
     "category": "skincare or makeup",
-    "type": "lipstick/foundation/blush/serum/moisturizer/etc"
+    "type": "lipstick/foundation/blush/eyeshadow/serum/moisturizer/etc",
+    "rgbColor": {
+      "r": number (0-255),
+      "g": number (0-255),
+      "b": number (0-255)
+    }
   }
-]`;
+]
+
+IMPORTANT: For makeup products (lipstick, foundation, blush, eyeshadow), you MUST include accurate RGB color values that represent the actual shade. For skincare products, use neutral skin-tone colors.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

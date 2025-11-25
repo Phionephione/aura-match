@@ -21,6 +21,11 @@ interface Recommendation {
   whyItSuits: string;
   category: string;
   type: string;
+  rgbColor?: {
+    r: number;
+    g: number;
+    b: number;
+  };
 }
 
 const makeupFilters = [
@@ -104,6 +109,8 @@ const VirtualTryOn = ({ imageUrl, skinAnalysis }: VirtualTryOnProps) => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [customColor, setCustomColor] = useState<{ r: number; g: number; b: number } | null>(null);
+  const [customType, setCustomType] = useState<string | null>(null);
   const [intensity, setIntensity] = useState<number>(50);
   const [landmarks, setLandmarks] = useState<any>(null);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -188,8 +195,6 @@ const VirtualTryOn = ({ imageUrl, skinAnalysis }: VirtualTryOnProps) => {
   };
 
   useEffect(() => {
-    if (!selectedFilter) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -203,6 +208,43 @@ const VirtualTryOn = ({ imageUrl, skinAnalysis }: VirtualTryOnProps) => {
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      
+      // Apply custom color from AI recommendation
+      if (customColor && customType) {
+        if (!landmarks) {
+          const fallbackOpacity = (intensity / 100) * 0.5;
+          ctx.fillStyle = `rgba(${customColor.r}, ${customColor.g}, ${customColor.b}, ${fallbackOpacity})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          return;
+        }
+
+        switch (customType) {
+          case "lipstick":
+            applyMakeupToRegion(ctx, LIP_INDICES.outer, customColor, canvas.width, canvas.height, 4, 0.5);
+            break;
+          case "blush":
+            applyMakeupToRegion(ctx, CHEEK_INDICES.left, customColor, canvas.width, canvas.height, 12, 0.35);
+            applyMakeupToRegion(ctx, CHEEK_INDICES.right, customColor, canvas.width, canvas.height, 12, 0.35);
+            break;
+          case "eyeshadow":
+            applyMakeupToRegion(ctx, EYE_INDICES.left, customColor, canvas.width, canvas.height, 8, 0.3);
+            applyMakeupToRegion(ctx, EYE_INDICES.right, customColor, canvas.width, canvas.height, 8, 0.3);
+            break;
+          case "foundation":
+            const foundationOpacity = (intensity / 100) * 0.2;
+            ctx.save();
+            ctx.globalCompositeOperation = 'overlay';
+            ctx.filter = 'blur(15px)';
+            ctx.fillStyle = `rgba(${customColor.r}, ${customColor.g}, ${customColor.b}, ${foundationOpacity})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+            break;
+        }
+        return;
+      }
+
+      // Apply preset filter
+      if (!selectedFilter) return;
       
       const filter = makeupFilters.find((f) => f.id === selectedFilter);
       if (!filter) return;
@@ -237,7 +279,7 @@ const VirtualTryOn = ({ imageUrl, skinAnalysis }: VirtualTryOnProps) => {
           break;
       }
     };
-  }, [selectedFilter, imageUrl, landmarks, intensity]);
+  }, [selectedFilter, customColor, customType, imageUrl, landmarks, intensity]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -285,6 +327,33 @@ const VirtualTryOn = ({ imageUrl, skinAnalysis }: VirtualTryOnProps) => {
     }
   };
 
+  const handleTryOnRecommendation = (rec: Recommendation) => {
+    if (!rec.rgbColor) {
+      toast({
+        title: "Cannot apply this shade",
+        description: "Color information not available for this product",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Clear preset filter and apply custom color
+    setSelectedFilter(null);
+    setCustomColor(rec.rgbColor);
+    setCustomType(rec.type);
+    
+    toast({
+      title: "Shade Applied!",
+      description: `Trying on ${rec.shade} from ${rec.brand}`,
+    });
+  };
+
+  const clearAllFilters = () => {
+    setSelectedFilter(null);
+    setCustomColor(null);
+    setCustomType(null);
+  };
+
   return (
     <section className="py-20 px-4 bg-gradient-to-b from-background to-warm-beige/30">
       <div className="container max-w-7xl mx-auto">
@@ -312,10 +381,27 @@ const VirtualTryOn = ({ imageUrl, skinAnalysis }: VirtualTryOnProps) => {
                 className="w-full h-full object-cover"
               />
             </div>
-            {selectedFilter && (
-              <p className="text-center mt-4 text-sm text-muted-foreground">
-                Current: {makeupFilters.find((f) => f.id === selectedFilter)?.name}
-              </p>
+            {(selectedFilter || customColor) && (
+              <div className="mt-4 space-y-2">
+                {selectedFilter && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Filter: {makeupFilters.find((f) => f.id === selectedFilter)?.name}
+                  </p>
+                )}
+                {customColor && (
+                  <p className="text-center text-sm text-rose font-medium">
+                    AI Recommendation Applied
+                  </p>
+                )}
+                <Button
+                  onClick={clearAllFilters}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  Clear All
+                </Button>
+              </div>
             )}
             {skinAnalysis && (
               <div className="mt-4 p-4 bg-gradient-to-r from-rose-light/20 to-warm-beige/30 rounded-lg">
@@ -495,10 +581,19 @@ const VirtualTryOn = ({ imageUrl, skinAnalysis }: VirtualTryOnProps) => {
                         {rec.whyItSuits}
                       </p>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <span className="text-xs px-2 py-1 rounded-full bg-rose/10 text-rose capitalize">
                           {rec.type}
                         </span>
+                        {rec.rgbColor && (rec.type === 'lipstick' || rec.type === 'blush' || rec.type === 'eyeshadow' || rec.type === 'foundation') && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleTryOnRecommendation(rec)}
+                            className="ml-auto bg-rose hover:bg-rose/90 text-xs h-7"
+                          >
+                            Try On
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </Card>

@@ -32,7 +32,7 @@ const Index = () => {
       />
       {analyzedImage && (
         <>
-          <VirtualTryOn imageUrl={analyzedImage} skinTone={skinAnalysis?.skinTone} />
+          <VirtualTryOn imageUrl={analyzedImage} skinAnalysis={skinAnalysis} />
           <ProductRecommendations 
             skinAnalysis={skinAnalysis}
             searchQuery={searchQuery}

@@ -1,0 +1,4 @@
+project_id = "alrjbimbzperxynauwrk"
+
+[functions.analyze-shade-recommendations]
+verify_jwt = false
